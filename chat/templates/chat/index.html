@@ -1,0 +1,84 @@
+<!-- chat/templates/chat/index.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Chat Rooms</title>
+</head>
+<style>
+    #myDIV {
+        height: 75vh;
+        /* width: 250px; */
+        overflow: auto;
+        background: coral;
+    }
+
+    #content {
+        /* margin: 500px; */
+        height: 800px;
+        /* width: 2000px; */
+        background: coral;
+        position: relative;
+    }
+</style>
+
+<body>
+    <div id="myDIV">
+        <div id="content">
+            <div style="position: absolute; top: 0">Some text at the top</div>
+            <div style="position: absolute; bottom: 0">Some text at the bottom</div>
+        </div>
+    </div>
+    What chat room would you like to enter?<br />
+    <input id="room-name-input" type="text" size="100" /><br />
+    <input id="room-name-submit" type="button" value="Enter" />
+
+    <script>
+        document.querySelector("#room-name-input").focus();
+        document.querySelector("#room-name-input").onkeyup = function (e) {
+            if (e.keyCode === 13) {
+                // enter, return
+                document.querySelector("#room-name-submit").click();
+            }
+        };
+
+        document.querySelector("#room-name-submit").onclick = function (e) {
+            var roomName = document.querySelector("#room-name-input").value;
+            window.location.pathname = "/chat/" + roomName + "/";
+        };
+    </script>
+
+    <br />
+    {{user}}
+
+    <h1>The Element Object</h1>
+    <h2>The scrollIntoView() Method</h2>
+
+    <p>
+        Click the buttons to scroll to the top or to the bottom of the element
+        with id="content".
+    </p>
+
+    <p>
+        <button onclick="scrollToTop()">Scroll to the top</button>
+        <button onclick="scrollToBottom()">Scroll to the bottom</button>
+    </p>
+
+
+
+    <script>
+        const element = document.getElementById("content");
+
+        function scrollToTop() {
+            element.scrollIntoView(true);
+        }
+
+        function scrollToBottom() {
+            element.scrollIntoView(false);
+        }
+        scrollToBottom();
+    </script>
+</body>
+
+</html>

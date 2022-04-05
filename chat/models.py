@@ -1,0 +1,16 @@
+from django.db import models
+
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+
+
+class Message(models.Model):
+    author = models.ForeignKey(User, related_name='author_messages', on_delete=models.CASCADE)
+    content = models.TextField()
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        # return self.author.username
+        return self.content[:20]
+

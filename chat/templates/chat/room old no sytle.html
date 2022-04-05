@@ -1,0 +1,159 @@
+{% load static %}
+
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Chat Room</title>
+</head>
+
+<body>
+    Room Name: {{room_name | safe}} <br />
+    {{ user }} <br />
+    <hr style="height:3px;border-width:0;color:gray;background-color:gray">
+    <br />
+
+    <div style="height: 50vh; overflow: auto">
+        <button style="margin-left: 12em;" onclick="">Scroll to the top</button>
+    <div id="chat-log" style="width: 25em;"></div>
+    </div>
+
+
+    <!-- <textarea id="chat-log" cols="50" rows="20"></textarea><br> -->
+    <!-- <input id="chat-message-input" type="text" size="50" /><br /> -->
+    <input id="chat-message-input" type="text" style="width: 30em;" /><br />
+    <input id="chat-message-submit" type="button" value="Send" />
+
+    <p>
+        <button onclick="scrollToTop()">Scroll to the top</button>
+        <button onclick="scrollToBottom()">Scroll to the bottom</button>
+    </p>
+    <!-- {{ room_name|json_script:"room-name" }} -->
+
+    <script src="{% static 'js/reconnecting-websocket.js' %}"></script>
+    <script>
+        // const roomName = JSON.parse(document.getElementById('room-name').textContent);
+        const roomName = "{{ room_name }}";
+        const chatDiv = document.getElementById("chat-log");
+        
+
+        function scrollToTop() {
+            chatDiv.scrollIntoView({behavior: "smooth", block: "start", inline: "nearest"});
+        }
+
+        function scrollToBottom() {
+            chatDiv.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+        }
+
+
+        function loadMoreMessages() {
+            chatDiv.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+        }
+
+        
+        function findTime(timeStamp) {
+            let timeSpend = new Date().getTime() - new Date(timeStamp).getTime(); //in milliseconds
+            timeSpend = timeSpend / 1000; // ms to seconds
+
+            let sendtime;
+            if (timeSpend < 60) {
+                // less then 1 min
+                sendtime = Math.ceil(timeSpend) + " seconds ago";
+            } else if (timeSpend < 3600) {
+                // less then 1 hour < 3600 s
+                sendtime = Math.floor(timeSpend / 60) + " minutes ago";
+            } else if (timeSpend < 46800) {
+                // less then 13 hour < 46800 s
+                sendtime = Math.floor(timeSpend / 3600) + " hours ago";
+            } else if(timeSpend < 604800){
+                // less then 7 days < 604800 s
+                sendtime = Math.floor(timeSpend / 86400) + " days ago";
+            } else {
+                sendtime = new Date(timeStamp).toLocaleTimeString() + '<br>' + new Date(timeStamp).toDateString();                
+                // '7:29:22 PM'
+                // 'Fri Apr 01 2022'
+            }
+            return sendtime;
+            
+        }
+
+
+
+        let chatSocket;
+        if (window.location.protocol == "https:") {
+            // checks If HTTPs or not
+            // chatSocket = new ReconnectingWebSocket(
+            chatSocket = new WebSocket(
+                "wss://" + window.location.host + "/ws/chat/" + roomName + "/"
+            );
+        } else {
+            chatSocket = new WebSocket(
+                "ws://" + window.location.host + "/ws/chat/" + roomName + "/"
+            );
+        }
+
+        chatSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            // console.log(e);
+            console.log(data);
+            let sendtime = findTime(data.date)
+
+            // // let sendtime = data.date
+            // let timeSpend = new Date().getTime() - new Date(data.date).getTime(); //in milliseconds
+            // timeSpend = timeSpend / 1000; // ms to seconds
+            // let sendtime = findTime(data.date)
+            // if (timeSpend < 60) {
+            //     sendtime = Math.ceil(timeSpend) + " seconds ago";
+            // } else if (timeSpend < 3600) {
+            //     // less then 1 hour
+            //     sendtime = Math.ceil(timeSpend / 60) + " minutes ago";
+            // } else if (timeSpend < 46800) {
+            //     // less then 13 hour
+            //     sendtime = Math.ceil(timeSpend / 3600) + " hours ago";
+            // } else {
+            //     sendtime = Math.ceil(timeSpend / 86400) + " days ago";
+            // }
+
+            chatDiv.innerHTML +=
+                "<b>" +
+                data.sender +
+                ": </b>" +
+                data.message +
+                "<br><small><b>" +
+                sendtime +
+                "</b></small>" +
+                "<br><br>";
+            chatDiv.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+        };
+
+        chatSocket.onclose = function (e) {
+            console.error("Chat socket closed unexpectedly");
+        };
+
+        document.querySelector("#chat-message-input").focus();
+        document.querySelector("#chat-message-input").onkeyup = function (e) {
+            if (e.keyCode === 13) {
+                //13 = enter, return
+                document.querySelector("#chat-message-submit").click();
+            }
+        };
+
+        document.querySelector("#chat-message-submit").onclick = function (e) {
+            // const message = document.querySelector('#chat-message-input').value;
+            const messageInputDom = document.querySelector("#chat-message-input");
+            const message = messageInputDom.value;
+            chatSocket.send(
+                JSON.stringify({
+                    sender: "{{user}}",
+                    message: message,
+                })
+            );
+            // message = '';
+            messageInputDom.value = "";
+        };
+    </script>
+</body>
+
+</html>
